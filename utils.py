@@ -147,7 +147,7 @@ class _UserFormWindow(Tk):
         if self.mode == 'sign up':
             self.login_now = IntVar()
             self.login_checkbox = ttk.Checkbutton(self.button_frame,
-                                                  text='Login now',
+                                                  text='Log in now',
                                                   padding=5,
                                                   variable=self.login_now)
             self.login_checkbox.pack()
@@ -177,17 +177,17 @@ class _UserFormWindow(Tk):
 
 
 # Functions
-def style_map(widget, **kwargs):
-    for attr, value in kwargs.items():
-        widget[attr] = value
-
-
 def create_info_frame(master=None, editable=True):
     return _InfoFrame(master, editable)
 
 
 def create_user_form(master=None, mode='sign up', deiconify_master=True):
     return _UserFormWindow(master, mode, deiconify_master)
+
+
+def style_map(widget, **kwargs):
+    for attr, value in kwargs.items():
+        widget[attr] = value
 
 
 # Constants:

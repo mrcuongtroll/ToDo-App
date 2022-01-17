@@ -7,8 +7,9 @@ import utils
 # Classes
 class _ProfileFrame(ttk.Frame):
 
-    def __init__(self, master=None):
+    def __init__(self, master=None, username=''):
         super().__init__()
+        self.username = username
         self.master = master
         self.style = ttk.Style()
 
@@ -19,8 +20,7 @@ class _ProfileFrame(ttk.Frame):
         self.account_frame2 = ttk.Frame(self.account_frame, relief=FLAT, padding=10)
         self.account_frame2.pack(anchor=W, fill=BOTH, expand=True)
         ttk.Label(self.account_frame2, text='Username:').grid(row=0, column=0, sticky=W)
-        self.username = ttk.Label(self.account_frame2, text='')  # TODO: update
-        self.username.grid(row=0, column=1, sticky=W)
+        ttk.Label(self.account_frame2, text=self.username).grid(row=0, column=1, sticky=W)
         ttk.Label(self.account_frame2, text='Password:').grid(row=1, column=0, sticky=W)
         ttk.Label(self.account_frame2, text='********').grid(row=1, column=1, sticky=W)
         self.change_password_button = ttk.Label(self.account_frame2,
@@ -82,5 +82,5 @@ class _ProfileFrame(ttk.Frame):
 
 
 # Functions
-def create_profile_frame(master=None):
-    return _ProfileFrame(master)
+def create_profile_frame(master=None, username=''):
+    return _ProfileFrame(master, username)

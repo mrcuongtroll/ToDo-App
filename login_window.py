@@ -1,10 +1,12 @@
 from tkinter import *
 from tkinter import ttk
 import os
+import json
 import datetime
 import calendar
 from working_window import *
 import utils
+import data
 
 
 # Classes
@@ -15,8 +17,18 @@ class _LoginWindow(Tk):
 
     def __init__(self):
         super().__init__()
+        # The data will be stored in this folder
         self.data_path = os.path.join(os.getcwd(), 'data/')
-        # TODO: data
+        try:
+            os.makedirs(self.data_path)
+            os.makedirs(os.path.join(self.data_path, 'tasks/'))
+        except FileExistsError:
+            pass
+        try:
+            with open(os.path.join(self.data_path, 'accounts.bin'), 'rb') as f:
+                self.accounts = json.loads(f.read().decode('utf-8'))
+        except FileNotFoundError:
+            self.accounts = data.INIT_ACCOUNTS
 
         # root window.
         self.title('ToDo List - Login')
@@ -30,7 +42,7 @@ class _LoginWindow(Tk):
         # The title of the app
         self.label_frame = ttk.Frame(self, relief=FLAT, padding=40)
         self.label_frame.pack(expand=TRUE)
-        self.label = ttk.Label(self.label_frame, text='ToDo List', style='Title.TLabel')
+        self.label = ttk.Label(self.label_frame, text='To-Do List', style='Title.TLabel')
         self.label.pack()
         self.rowconfigure(index=0, weight=1)
 
@@ -58,7 +70,10 @@ class _LoginWindow(Tk):
                                                                 _LoginWindow.USERNAME_DEFAULT_TEXT,
                                                                 event=e)
                                  )
-        self.username_entry.bind('<Return>', self.login)
+        self.username_entry.bind('<Return>', lambda e: self.login(username=self.username_entry.get(),
+                                                                  password=self.password_entry.get(),
+                                                                  event=e)
+                                 )
         # The user enters their password here
         self.password_label = ttk.Label(self.input_frame, text='Password', padding=5)
         self.password_label.grid(row=1, column=0, sticky=E)
@@ -76,7 +91,10 @@ class _LoginWindow(Tk):
                                                                 _LoginWindow.PASSWORD_DEFAULT_TEXT,
                                                                 event=e)
                                  )
-        self.password_entry.bind('<Return>', self.login)
+        self.password_entry.bind('<Return>', lambda e: self.login(username=self.username_entry.get(),
+                                                                  password=self.password_entry.get(),
+                                                                  event=e)
+                                 )
         # A checkbox to indicate that the user wants to stay signed in
         self.stay_signed_in = IntVar()
         self.login_checkbox = ttk.Checkbutton(self.input_frame,
@@ -88,7 +106,11 @@ class _LoginWindow(Tk):
         # The login button
         self.button_frame = ttk.Frame(self.login_frame, relief=FLAT, padding=10)
         self.button_frame.pack()
-        self.login_button = ttk.Button(self.button_frame, text='Login', command=self.login)
+        self.login_button = ttk.Button(self.button_frame,
+                                       text='Log in',
+                                       command=lambda: self.login(username=self.username_entry.get(),
+                                                                  password=self.password_entry.get())
+                                       )
         self.login_button.pack()
         # Sign up option
         self.signup_button = ttk.Label(self.button_frame,
@@ -107,17 +129,31 @@ class _LoginWindow(Tk):
         self.password_entry.insert(0, _LoginWindow.PASSWORD_DEFAULT_TEXT)
         self.style.configure('SignUp.TLabel', font='Arial 9', foreground='blue')
 
+        # If the 'Stay singed in' option is chosen in the last login, then log the last user in
+        if self.accounts['stay_signed_in'] is not None:
+            username = self.accounts['stay_signed_in']
+            password = self.accounts['accounts'][username]['password']
+            self.login(username, password)
+
         # main loop
         self.mainloop()
+
+    def destroy(self):
+        with open(os.path.join(self.data_path, 'accounts.bin'), 'wb') as f:
+            f.write(json.dumps(self.accounts).encode('utf-8'))
+        super().destroy()
 
     def signup(self, event=None):
         utils.create_user_form(self, mode=utils.SIGN_UP)
         self.withdraw()
 
-    def login(self, event=None):
-        # TODO: Write this properly
-        self.destroy()
-        create_working_window(mode='admin')
+    def login(self, username, password, event=None):
+        if self.accounts['accounts'][username]['password'] == password:
+            if self.stay_signed_in.get():
+                self.accounts['stay_signed_in'] = username
+            mode = self.accounts['accounts'][username]['role']
+            self.destroy()
+            create_working_window(username=username, mode=mode)
 
     # Entry fields related functions
     def entry_focus_in(self, entry_widget, entry_style, default_text, event=None):

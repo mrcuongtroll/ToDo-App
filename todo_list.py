@@ -9,9 +9,10 @@ import tkcalendar
 # Classes
 class _TodoFrame(ttk.Frame):
 
-    def __init__(self, master=None):
+    def __init__(self, master=None, username=''):
         super().__init__()
         self.master = master
+        self.username = username
 
         # Control frame: Contains component (buttons, calendar,...) to control the workflow
         self.control_frame = ttk.Frame(self, padding=5)
@@ -87,7 +88,7 @@ class _TodoFrame(ttk.Frame):
         self.unfinished_list.grid(row=0, column=0, sticky=N+S+E+W)
         self.unfinished_xscrollbar.config(command=self.unfinished_list.xview)
         self.unfinished_yscrollbar.config(command=self.unfinished_list.yview)
-        self.unfinished_list['columns'] = ('Task', 'Start date', 'End date', 'Location', 'Status')
+        self.unfinished_list['columns'] = ('Task', 'Date', 'Start', 'End', 'Location', 'Status')
         self.unfinished_list.column('#0', width=60, minwidth=60, stretch=NO, anchor=CENTER)
         self.unfinished_list.heading('#0', text='Finished')
         for column in self.unfinished_list['columns']:
@@ -109,7 +110,7 @@ class _TodoFrame(ttk.Frame):
         self.finished_list.grid(row=0, column=0, sticky=N+S+E+W)
         self.finished_xscrollbar.config(command=self.finished_list.xview)
         self.finished_yscrollbar.config(command=self.finished_list.yview)
-        self.finished_list['columns'] = ('Task', 'Start date', 'End date', 'Location', 'Finish date', 'Finished')
+        self.finished_list['columns'] = ('Task', 'Date', 'Start', 'End', 'Location', 'Finish date', 'Finished')
         self.finished_list.column('#0', width=0, minwidth=0, stretch=NO)
         for column in self.finished_list['columns']:
             self.finished_list.column(column, minwidth=40)
@@ -121,5 +122,5 @@ class _TodoFrame(ttk.Frame):
 
 
 # Functions
-def create_todo_frame(master=None):
-    return _TodoFrame(master)
+def create_todo_frame(master=None, username=''):
+    return _TodoFrame(master, username)
