@@ -154,6 +154,19 @@ class _LoginWindow(Tk):
         elif username not in self.accounts['accounts'].keys():
             messagebox.showerror('Error', 'Username or password is incorrect')
         elif self.accounts['accounts'][username]['password'] == password:
+            restriction = self.accounts['accounts'][username]['restriction']
+            if restriction is not None:
+                if restriction == 'indefinite':
+                    return messagebox.showwarning('Restricted', 'Your account has been restricted indefinitely')
+                else:
+                    today = datetime.date.today()
+                    restriction_date = datetime.datetime.strptime(restriction, '%m/%d/%Y').date()
+                    if today < restriction_date:
+                        return messagebox.showwarning('Restricted',
+                                                      f'Your account has been restricted until {restriction_date}')
+                    else:
+                        messagebox.showinfo('Restriction', 'Your restriction has been lifted')
+                        self.accounts['accounts'][username]['restriction'] = None
             if self.stay_signed_in.get():
                 self.accounts['stay_signed_in'] = username
             mode = self.accounts['accounts'][username]['role']
@@ -161,6 +174,7 @@ class _LoginWindow(Tk):
             create_working_window(username=username, mode=mode)
         else:
             messagebox.showerror('Error', 'Username or password is incorrect')
+        return
 
     # Entry fields related functions
     def entry_focus_in(self, entry_widget, entry_style, default_text, event=None):

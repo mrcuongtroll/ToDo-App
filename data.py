@@ -2,7 +2,8 @@
 class Account:
 
     def __init__(self, password, role='user', first_name=None, last_name=None,
-                 birth_year=None, birth_month=None, birth_day=None, address=None, time_overlap_tags=()):
+                 birth_year=None, birth_month=None, birth_day=None, address=None,
+                 time_overlap_tags=(), restriction=None):
         self.password = password
         self.role = role
         self.first_name = first_name
@@ -12,6 +13,7 @@ class Account:
         self.birth_day = birth_day
         self.address = address
         self.time_overlap_tags = time_overlap_tags
+        self.restriction = restriction      # Format: mm/dd/YYYY
 
     def to_dict(self):
         return self.__dict__
