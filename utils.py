@@ -1,7 +1,9 @@
 from tkinter import *
 from tkinter import ttk
+from tkinter import messagebox
 import datetime
 import calendar
+import data
 
 
 # Classes
@@ -89,9 +91,10 @@ class _InfoFrame(ttk.Frame):
 
 class _UserFormWindow(Tk):
 
-    def __init__(self, master=None, mode='sign up', deiconify_master=True):
+    def __init__(self, master=None, accounts_data: dict = None, mode='sign up', deiconify_master=True):
         super().__init__()
         self.master = master
+        self.accounts = accounts_data
         self.mode = mode
         self.deiconify_master = deiconify_master
 
@@ -145,7 +148,7 @@ class _UserFormWindow(Tk):
         self.button_frame = ttk.Frame(self, relief=FLAT, padding=20)
         self.button_frame.pack()
         if self.mode == 'sign up':
-            self.login_now = IntVar()
+            self.login_now = IntVar(self)
             self.login_checkbox = ttk.Checkbutton(self.button_frame,
                                                   text='Log in now',
                                                   padding=5,
@@ -168,11 +171,41 @@ class _UserFormWindow(Tk):
         return
 
     def signup(self, event=None):
-        # TODO: this
+        if not self.username_entry.get() or not self.password_entry.get():
+            messagebox.showerror('Error', 'Your username and password are required')
+        elif self.username_entry.get() in self.accounts['accounts'].keys():
+            messagebox.showerror('Error', 'Username already exists')
+        elif not self.confirm_password_entry.get():
+            messagebox.showerror('Error', 'Please confirm your password')
+        elif self.confirm_password_entry.get() != self.password_entry.get():
+            messagebox.showerror('Error', "Password confirmation doesn't match")
+        else:
+            username = self.username_entry.get()
+            password = self.password_entry.get()
+            role = 'user'
+            first_name = self.info_frame.first_name_entry.get() if self.info_frame.first_name_entry.get() else None
+            last_name = self.info_frame.last_name_entry.get() if self.info_frame.last_name_entry.get() else None
+            birth_year = self.info_frame.year_option.get() if self.info_frame.year_option.get() else None
+            birth_month = self.info_frame.month_option.get() if self.info_frame.month_option.get() else None
+            birth_day = self.info_frame.day_option.get() if self.info_frame.day_option.get() else None
+            address = self.info_frame.address_entry.get() if self.info_frame.address_entry.get() else None
+            new_account = data.Account(password=password,
+                                       role=role,
+                                       first_name=first_name,
+                                       last_name=last_name,
+                                       birth_year=birth_year,
+                                       birth_month=birth_month,
+                                       birth_day=birth_day,
+                                       address=address)
+            self.accounts['accounts'][username] = new_account.to_dict()
+            self.destroy()
+            if self.mode == 'sign up':
+                if self.login_now.get():
+                    self.master.login(username, password)
         return
 
     def add_user(self, event=None):
-        # TODO: this
+        self.signup()
         return
 
 
@@ -181,8 +214,8 @@ def create_info_frame(master=None, editable=True):
     return _InfoFrame(master, editable)
 
 
-def create_user_form(master=None, mode='sign up', deiconify_master=True):
-    return _UserFormWindow(master, mode, deiconify_master)
+def create_user_form(master=None, accounts_data=None, mode='sign up', deiconify_master=True):
+    return _UserFormWindow(master, accounts_data, mode, deiconify_master)
 
 
 def style_map(widget, **kwargs):

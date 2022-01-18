@@ -7,10 +7,11 @@ import utils
 # Classes
 class _ProfileFrame(ttk.Frame):
 
-    def __init__(self, master=None, username=''):
+    def __init__(self, master=None, accounts_data: dict = None, username=''):
         super().__init__()
         self.username = username
         self.master = master
+        self.accounts = accounts_data
         self.style = ttk.Style()
 
         # Account frame: username and password
@@ -82,5 +83,5 @@ class _ProfileFrame(ttk.Frame):
 
 
 # Functions
-def create_profile_frame(master=None, username=''):
-    return _ProfileFrame(master, username)
+def create_profile_frame(master=None, accounts_data=None, username=''):
+    return _ProfileFrame(master, accounts_data, username)

@@ -59,13 +59,16 @@ class _WorkingWindow(Tk):
         self.todo_frame = todo_list.create_todo_frame(self.notebook, self.username)
         self.notebook.add(self.todo_frame, text='To do list')
         # Profile: The user can view their profile info here
-        self.profile_frame = profile.create_profile_frame(self.notebook, self.username)
+        self.profile_frame = profile.create_profile_frame(self.notebook,
+                                                          accounts_data=self.accounts,
+                                                          username=self.username)
         self.notebook.add(self.profile_frame, text='Your profile')
         self.logout_button = ttk.Button(self.profile_frame, text='Log out', command=lambda: self.logout())
         self.logout_button.grid(row=2, column=0, sticky=E)
         # Accounts manager: For the admin to manage user accounts
         if self.mode == 'admin':
-            self.accounts_manager_frame = accounts_manager.create_accounts_manager_frame(self.notebook)
+            self.accounts_manager_frame = accounts_manager.create_accounts_manager_frame(self.notebook,
+                                                                                         accounts_data=self.accounts)
             self.notebook.add(self.accounts_manager_frame, text='Manage user accounts')
 
         # main loop

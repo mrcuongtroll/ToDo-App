@@ -7,9 +7,10 @@ import utils
 # Classes
 class _AccountsManagerFrame(ttk.Frame):
 
-    def __init__(self, master=None):
+    def __init__(self, master=None, accounts_data: dict = None):
         super().__init__()
         self.master = master
+        self.accounts = accounts_data
 
         # Control frame: Contains buttons and stuff
         self.control_frame = ttk.Frame(self, padding=30)
@@ -65,10 +66,10 @@ class _AccountsManagerFrame(ttk.Frame):
         self.columnconfigure(index=1, weight=1)
 
     def add_user(self, event=None):
-        utils.create_user_form(self, mode=utils.ADD_USER, deiconify_master=False)
+        utils.create_user_form(self, accounts_data=self.accounts, mode=utils.ADD_USER, deiconify_master=False)
         return
 
 
 # Functions
-def create_accounts_manager_frame(master=None):
-    return _AccountsManagerFrame(master)
+def create_accounts_manager_frame(master=None, accounts_data=None):
+    return _AccountsManagerFrame(master, accounts_data)

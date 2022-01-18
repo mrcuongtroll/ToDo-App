@@ -1,5 +1,6 @@
 from tkinter import *
 from tkinter import ttk
+from tkinter import messagebox
 import os
 import json
 import datetime
@@ -144,16 +145,22 @@ class _LoginWindow(Tk):
         super().destroy()
 
     def signup(self, event=None):
-        utils.create_user_form(self, mode=utils.SIGN_UP)
+        utils.create_user_form(self, accounts_data=self.accounts, mode=utils.SIGN_UP)
         self.withdraw()
 
     def login(self, username, password, event=None):
-        if self.accounts['accounts'][username]['password'] == password:
+        if not self.username_entry.get() or not self.password_entry.get():
+            messagebox.showerror('Error', 'Please enter your username and password')
+        elif username not in self.accounts['accounts'].keys():
+            messagebox.showerror('Error', 'Username or password is incorrect')
+        elif self.accounts['accounts'][username]['password'] == password:
             if self.stay_signed_in.get():
                 self.accounts['stay_signed_in'] = username
             mode = self.accounts['accounts'][username]['role']
             self.destroy()
             create_working_window(username=username, mode=mode)
+        else:
+            messagebox.showerror('Error', 'Username or password is incorrect')
 
     # Entry fields related functions
     def entry_focus_in(self, entry_widget, entry_style, default_text, event=None):
