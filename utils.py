@@ -6,12 +6,26 @@ import calendar
 import data
 
 
+# Constants:
+SIGN_UP = 'sign up'
+ADD_USER = 'add user'
+DAYS_31 = tuple(range(1, 32))
+DAYS_30 = tuple(range(1, 31))
+DAYS_29 = tuple(range(1, 30))
+DAYS_28 = tuple(range(1, 29))
+MONTHS_FULL = tuple(calendar.month_name[i] for i in range(1, 13))
+MONTHS_SHORT = tuple(calendar.month_abbr[i] for i in range(1, 13))
+YEARS_PAST = tuple(range(datetime.datetime.now().year-100, datetime.datetime.now().year+1))
+YEARS_FUTURE = tuple(range(datetime.datetime.now().year, datetime.datetime.now().year+100))
+
+
 # Classes
 class _InfoFrame(ttk.Frame):
 
-    def __init__(self, master=None, editable=True):
+    def __init__(self, master=None, editable=True, acc_info: dict = None):
         super().__init__(master)
         self.master = master
+        self.acc_info = acc_info
 
         # Name
         self.name_frame = ttk.Frame(self, padding=8)
@@ -29,23 +43,17 @@ class _InfoFrame(ttk.Frame):
         self.dob_frame.pack(anchor=W, fill=X)
         self.year_label = ttk.Label(self.dob_frame, text='Year', padding=5)
         self.year_label.grid(row=0, column=0)
-        self.year_option = ttk.Combobox(self.dob_frame,
-                                        values=YEARS_PAST,
-                                        width=5)
+        self.year_option = ttk.Combobox(self.dob_frame, values=YEARS_PAST, width=5)
         self.year_option.grid(row=0, column=1)
         self.year_option.bind('<<ComboboxSelected>>', self.enumerate_days)
         self.month_label = ttk.Label(self.dob_frame, text='Month', padding=5)
         self.month_label.grid(row=0, column=2)
-        self.month_option = ttk.Combobox(self.dob_frame,
-                                         values=MONTHS_FULL,
-                                         width=10)
+        self.month_option = ttk.Combobox(self.dob_frame, values=MONTHS_FULL, width=10)
         self.month_option.grid(row=0, column=3)
         self.month_option.bind('<<ComboboxSelected>>', self.enumerate_days)
         self.day_label = ttk.Label(self.dob_frame, text='Day', padding=5)
         self.day_label.grid(row=0, column=4)
-        self.day_option = ttk.Combobox(self.dob_frame,
-                                       values=DAYS_31,
-                                       width=5)
+        self.day_option = ttk.Combobox(self.dob_frame, values=DAYS_31, width=5)
         self.day_option.grid(row=0, column=5)
         # Address
         self.address_frame = ttk.Frame(self, padding=8)
@@ -54,6 +62,21 @@ class _InfoFrame(ttk.Frame):
         self.address_label.grid(row=0, column=0, sticky=W)
         self.address_entry = ttk.Entry(self.address_frame, width=90)
         self.address_entry.grid(row=0, column=1, sticky=E+W)
+
+        # Add account info if provided
+        if acc_info is not None:
+            self.first_name_entry.insert(0,
+                                         '' if not acc_info['first_name'] else acc_info['first_name'])
+            self.last_name_entry.insert(0,
+                                        '' if not acc_info['last_name'] else acc_info['last_name'])
+            self.year_option.insert(0,
+                                    '' if not acc_info['birth_year'] else acc_info['birth_year'])
+            self.month_option.insert(0,
+                                     '' if not acc_info['birth_month'] else acc_info['birth_month'])
+            self.day_option.insert(0,
+                                   '' if not acc_info['birth_day'] else acc_info['birth_day'])
+            self.address_entry.insert(0,
+                                      '' if not acc_info['address'] else acc_info['address'])
 
         # Configures
         self.set_editable(editable)
@@ -87,6 +110,15 @@ class _InfoFrame(ttk.Frame):
         self.month_option.config(state=state)
         self.day_option.config(state=state)
         self.address_entry.config(state=state)
+
+    def update_info(self):
+        if self.acc_info:
+            self.acc_info['first_name'] = self.first_name_entry.get()
+            self.acc_info['last_name'] = self.last_name_entry.get()
+            self.acc_info['birth_year'] = self.year_option.get()
+            self.acc_info['birth_month'] = self.month_option.get()
+            self.acc_info['birth_day'] = self.day_option.get()
+            self.acc_info['address'] = self.address_entry.get()
 
 
 class _UserFormWindow(Tk):
@@ -198,6 +230,7 @@ class _UserFormWindow(Tk):
                                        birth_day=birth_day,
                                        address=address)
             self.accounts['accounts'][username] = new_account.to_dict()
+            messagebox.showinfo('Success', 'Account created successfully')
             self.destroy()
             if self.mode == 'sign up':
                 if self.login_now.get():
@@ -209,28 +242,76 @@ class _UserFormWindow(Tk):
         return
 
 
+class _InputDialog(Toplevel):
+
+    def __init__(self, master=None, title='', prompt='', show=None):
+        super().__init__()
+        self.master = master
+        self.style = ttk.Style(self)
+        self.title(title)
+        screen_width = self.winfo_screenwidth()
+        screen_height = self.winfo_screenheight()
+        self.geometry(f'250x100+{int(screen_width / 2 - 125)}+{int(screen_height / 2 - 50)}')
+        self.resizable(False, False)
+
+        self.frame = ttk.Frame(self, relief=FLAT, padding=15)
+        self.frame.pack()
+        self.prompt = ttk.Label(self.frame, text=prompt)
+        self.prompt.grid(row=0, column=0, columnspan=2, sticky=N)
+        self.text = StringVar(self)
+        self.text.trace_add('write', callback=lambda arg1, arg2, arg3: self.trace_entry())
+        if show == '*':
+            self.entry = ttk.Entry(self.frame, show='*', textvariable=self.text, width=30, exportselection=0)
+        else:
+            self.entry = ttk.Entry(self.frame, textvariable=self.text, width=30, exportselection=0)
+        self.entry.grid(row=1, column=0, columnspan=2)
+        self.entry.bind('<Return>', self.ok_button_pressed)
+        self.ok_button = ttk.Button(self.frame, text='OK', state=DISABLED, command=self.ok_button_pressed)
+        self.ok_button.grid(row=2, column=0, stick=S+E)
+        self.cancel_button = ttk.Button(self.frame, text='Cancel', command=self.cancel_button_pressed)
+        self.cancel_button.grid(row=2, column=1, sticky=S+W)
+
+        self.entry.focus_force()
+        self.wait_window()
+
+    def trace_entry(self):
+        try:
+            if self.entry.get():
+                self.ok_button.config(state=NORMAL)
+            else:
+                self.ok_button.config(state=DISABLED)
+        except:
+            return
+
+    def destroy(self):
+        # If you quit this dialog window then nothing will be returned
+        self.text.set('')
+        super().destroy()
+
+    def ok_button_pressed(self, event=None):
+        # If quit using the ok button then the content in the entry will be returned
+        if self.text.get():
+            super().destroy()
+            return self.text.get()
+
+    def cancel_button_pressed(self, event=None):
+        self.destroy()
+
+
 # Functions
-def create_info_frame(master=None, editable=True):
-    return _InfoFrame(master, editable)
+def create_info_frame(master=None, editable=True, acc_info=None):
+    return _InfoFrame(master, editable, acc_info)
 
 
 def create_user_form(master=None, accounts_data=None, mode='sign up', deiconify_master=True):
     return _UserFormWindow(master, accounts_data, mode, deiconify_master)
 
 
+def input_string_dialog(master=None, title='', prompt='', show='*'):
+    dialog = _InputDialog(master, title, prompt, show)
+    return dialog.text.get()
+
+
 def style_map(widget, **kwargs):
     for attr, value in kwargs.items():
         widget[attr] = value
-
-
-# Constants:
-SIGN_UP = 'sign up'
-ADD_USER = 'add user'
-DAYS_31 = tuple(range(1, 32))
-DAYS_30 = tuple(range(1, 31))
-DAYS_29 = tuple(range(1, 30))
-DAYS_28 = tuple(range(1, 29))
-MONTHS_FULL = tuple(calendar.month_name[i] for i in range(1, 13))
-MONTHS_SHORT = tuple(calendar.month_abbr[i] for i in range(1, 13))
-YEARS_PAST = tuple(range(datetime.datetime.now().year-100, datetime.datetime.now().year+1))
-YEARS_FUTURE = tuple(range(datetime.datetime.now().year, datetime.datetime.now().year+100))
