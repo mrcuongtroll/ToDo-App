@@ -9,9 +9,10 @@ import tkcalendar
 # Classes
 class _TodoFrame(ttk.Frame):
 
-    def __init__(self, master=None, username=''):
+    def __init__(self, master=None, accounts_data: dict = None, username=''):
         super().__init__()
         self.master = master
+        self.account = accounts_data
         self.username = username
 
         # Control frame: Contains component (buttons, calendar,...) to control the workflow
@@ -122,5 +123,5 @@ class _TodoFrame(ttk.Frame):
 
 
 # Functions
-def create_todo_frame(master=None, username=''):
-    return _TodoFrame(master, username)
+def create_todo_frame(master=None, accounts_data=None, username=''):
+    return _TodoFrame(master, accounts_data, username)

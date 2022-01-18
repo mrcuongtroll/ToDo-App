@@ -1,6 +1,6 @@
 from tkinter import *
 from tkinter import ttk
-import os
+from tkinter import messagebox
 import utils
 
 
@@ -56,7 +56,9 @@ class _ProfileFrame(ttk.Frame):
                                      lambda e: utils.style_map(self.update_info_button,
                                                                font='Arial 9')
                                      )
-        self.info_frame2 = utils.create_info_frame(self.info_frame, editable=False)
+        self.info_frame2 = utils.create_info_frame(self.info_frame,
+                                                   editable=False,
+                                                   acc_info=accounts_data['accounts'][username])
         self.info_frame2.pack(anchor=W)
         self.save_info_button = ttk.Button(self.info_frame, text='Save information', command=self.save_info)
 
@@ -67,18 +69,40 @@ class _ProfileFrame(ttk.Frame):
         self.style.configure('UpdateInfo.TLabel', font='Arial 9', foreground='blue')
 
     def change_password(self, event=None):
-        # TODO: implement this
+        confirm_password = utils.input_string_dialog(self, 'Confirm password', 'Confirm password', show='*')
+        if confirm_password:
+            if confirm_password != self.accounts['accounts'][self.username]['password']:
+                messagebox.showerror('Error', "Your password confirmation doesn't match")
+            else:
+                new_password = utils.input_string_dialog(self, 'New password', 'New password', show='*')
+                if new_password == self.accounts['accounts'][self.username]['password']:
+                    messagebox.showerror('Error', "New password must not be the same as old password")
+                elif new_password:
+                    confirm_new_password = utils.input_string_dialog(self, 'Confirm password',
+                                                                     'Confirm new password', show='*')
+                    if confirm_new_password:
+                        if new_password != confirm_new_password:
+                            messagebox.showerror('Error', "Your new password confirmation doesn't match")
+                        else:
+                            self.accounts['accounts'][self.username]['password'] = new_password
+                            messagebox.showinfo('Success', 'Your password has been changed successfully')
         return
 
     def update_info(self, event=None):
-        self.info_frame2.set_editable(True)
-        self.save_info_button.pack(anchor=W)
+        confirm_password = utils.input_string_dialog(self, 'Confirm password', 'Confirm password', show='*')
+        if confirm_password:
+            if confirm_password != self.accounts['accounts'][self.username]['password']:
+                messagebox.showerror('Error', "Your password confirmation doesn't match")
+            else:
+                self.info_frame2.set_editable(True)
+                self.save_info_button.pack(anchor=W)
         return
 
     def save_info(self, event=None):
-        # TODO: save info to files
+        self.info_frame2.update_info()
         self.info_frame2.set_editable(False)
         self.save_info_button.pack_forget()
+        messagebox.showinfo('Success', 'Your information has been updated successfully')
         return
 
 

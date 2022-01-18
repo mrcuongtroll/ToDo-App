@@ -56,7 +56,9 @@ class _WorkingWindow(Tk):
         self.notebook.pack(expand=True, side=LEFT, fill=BOTH, anchor=N+W)
         self.notebook.enable_traversal()    # (Shift) + Ctrl + Tab
         # To do list (The "main" working frame)
-        self.todo_frame = todo_list.create_todo_frame(self.notebook, self.username)
+        self.todo_frame = todo_list.create_todo_frame(self.notebook,
+                                                      accounts_data=self.accounts,
+                                                      username=self.username)
         self.notebook.add(self.todo_frame, text='To do list')
         # Profile: The user can view their profile info here
         self.profile_frame = profile.create_profile_frame(self.notebook,
