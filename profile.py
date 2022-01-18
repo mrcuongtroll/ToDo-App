@@ -44,8 +44,7 @@ class _ProfileFrame(ttk.Frame):
         Label(self.info_frame, text='Your information', font='Calibri 20 bold').pack(anchor=W)
         self.update_info_button = ttk.Label(self.info_frame,
                                             text='Update information',
-                                            style='UpdateInfo.TLabel',
-                                            command=None)  # TODO: this
+                                            style='UpdateInfo.TLabel')
         self.update_info_button.pack(anchor=W)
         self.update_info_button.bind('<Button-1>', self.update_info)
         self.update_info_button.bind('<Enter>',

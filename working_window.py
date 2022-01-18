@@ -44,7 +44,7 @@ class _WorkingWindow(Tk):
         self.menu.add_cascade(label='File', menu=self.file_menu)
         self.file_menu.add_command(label='Refresh', command=None)   # TODO: this
         self.file_menu.add_command(label='Log out', command=self.logout)
-        self.file_menu.add_command(label='Exit', command=None)  # TODO: this
+        self.file_menu.add_command(label='Exit', command=self.destroy)
         # TODO: add more stuff here
         # Edit menu:
         self.edit_menu = Menu(self.menu, tearoff=False)

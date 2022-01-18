@@ -9,3 +9,4 @@ ___________________________________________
   - Users can now sign up
   - Admin can now add new user accounts
   - Users can now update their information in the "Profile" tab
+  - Admin can now manage users properly
