@@ -4,6 +4,7 @@ from tkinter import messagebox
 import tkcalendar
 import datetime
 import calendar
+import random
 import data
 
 
@@ -11,6 +12,8 @@ import data
 SIGN_UP = 'sign up'
 ADD_USER = 'add user'
 VIEW_USER = 'view_user'
+ADD = 'add'
+VIEW = 'view'
 DAYS_31 = tuple(range(1, 32))
 DAYS_30 = tuple(range(1, 31))
 DAYS_29 = tuple(range(1, 30))
@@ -128,7 +131,7 @@ class _InfoFrame(ttk.Frame):
 
 
 class _UserFormWindow(Toplevel):
-
+    # Used to create Sign up form, Add user form and User's details form
     def __init__(self, master=None, accounts_data: dict = None, mode='sign up', deiconify_master=True,
                  username=None):
         super().__init__()
@@ -371,17 +374,306 @@ class _UserFormWindow(Toplevel):
     def restrict_user(self, event=None):
         restriction = self.date_entry.get_date()
         restriction = restriction.strftime('%m/%d/%Y')
-        self.accounts['accounts'][self.username]['restriction'] = restriction
-        self.date_entry.config(state=DISABLED)
-        self.restrict_button.config(state=DISABLED)
-        self.restrict_remove_button.config(state=NORMAL)
+        restrict = messagebox.askyesno('Restrict account',
+                                       f'Are you sure you want to restrict {self.username} until {restriction}?')
+        self.lift()
+        if restrict:
+            self.accounts['accounts'][self.username]['restriction'] = restriction
+            self.date_entry.config(state=DISABLED)
+            self.restrict_button.config(state=DISABLED)
+            self.restrict_remove_button.config(state=NORMAL)
         return
 
     def remove_restriction(self, event=None):
-        self.accounts['accounts'][self.username]['restriction'] = None
-        self.date_entry.config(state=NORMAL)
-        self.restrict_remove_button.config(state=DISABLED)
-        self.restrict_button.config(state=NORMAL)
+        remove = messagebox.askyesno('Remove restriction',
+                                     f'Are you sure you want to lift restriction from {self.username}?')
+        self.lift()
+        if remove:
+            self.accounts['accounts'][self.username]['restriction'] = None
+            self.date_entry.config(state=NORMAL)
+            self.restrict_remove_button.config(state=DISABLED)
+            self.restrict_button.config(state=NORMAL)
+        return
+
+
+class _TaskFormWindow(Toplevel):
+
+    def __init__(self, master=None, username=None, tasks_data: dict = None, mode=ADD,
+                 editable=True, task_name=None):
+        super().__init__()
+        self.master = master
+        self.username = username
+        self.tasks = tasks_data
+        self.mode = mode
+        self.task_name = task_name
+        if mode == VIEW:
+            assert task_name is not None, 'Task name must be provided in view mode'
+
+        # Basic setups
+        screen_width = self.winfo_screenwidth()
+        screen_height = self.winfo_screenheight()
+        self.geometry(f'640x640+{int(screen_width / 2 - 320)}+{int(screen_height / 2 - 320)}')
+        self.resizable(False, False)
+        self.style = ttk.Style(self)
+
+        # The title
+        self.label_frame = ttk.Frame(self, relief=FLAT, padding=20)
+        self.label_frame.pack()
+        if self.mode == ADD:
+            self.label = ttk.Label(self.label_frame, text='Add new task', style='TaskForm.TLabel')
+        elif self.mode == VIEW:
+            self.label = ttk.Label(self.label_frame, text='Task details', style='TaskForm.TLabel')
+        self.label.pack()
+
+        # Task information
+        self.main_frame = ttk.Frame(self, relief=GROOVE, padding=5)
+        self.main_frame.pack(fill=BOTH, expand=True)
+        # Task name:
+        self.name_frame = ttk.Frame(self.main_frame, relief=FLAT, padding=5)
+        self.name_frame.pack(fill=X)
+        ttk.Label(self.name_frame, text='Task name*: ', padding=5).grid(row=0, column=0, sticky=W)
+        self.task_name_entry = ttk.Entry(self.name_frame, width=30)
+        self.task_name_entry.grid(row=0, column=1, sticky=W)
+        self.finished_var = IntVar(self)
+        if self.mode == VIEW:
+            self.finished_checkbox = ttk.Checkbutton(self.name_frame,
+                                                     text='Finished',
+                                                     padding=5,
+                                                     variable=self.finished_var)
+            self.finished_checkbox.grid(row=1, column=0, columnspan=2, sticky=W)
+        # Datetime
+        self.time_frame = ttk.Frame(self.main_frame, relief=FLAT, padding=5)
+        self.time_frame.pack(fill=X)
+        ttk.Label(self.time_frame, text='Date*: ', padding=5).grid(row=0, column=0, sticky=W)
+        self.date_entry = tkcalendar.DateEntry(self.time_frame)
+        self.date_entry.grid(row=0, column=1, sticky=W)
+        self.start_var = IntVar(self)
+        if self.mode == ADD:
+            self.start_checkbox = ttk.Checkbutton(self.time_frame,
+                                                  text='Start time: ',
+                                                  padding=5,
+                                                  variable=self.start_var)
+            self.start_checkbox.grid(row=1, column=0, sticky=W)
+            self.start_checkbox.state(['!alternate'])
+        elif self.mode == VIEW:
+            ttk.Label(self.time_frame, text='Start time: ', padding=5).grid(row=1, column=0, sticky=W)
+        self.start_clock = _SpinClock(self.time_frame)
+        self.start_clock.grid(row=1, column=1, sticky=W)
+        self.end_var = IntVar(self)
+        if self.mode == ADD:
+            self.end_checkbox = ttk.Checkbutton(self.time_frame,
+                                                text='End time: ',
+                                                padding=5,
+                                                variable=self.end_var)
+            self.end_checkbox.grid(row=2, column=0, sticky=W)
+            self.end_checkbox.state(['!alternate'])
+        elif self.mode == VIEW:
+            ttk.Label(self.time_frame, text='End time: ', padding=5).grid(row=2, column=0, sticky=W)
+        self.end_clock = _SpinClock(self.time_frame)
+        self.end_clock.grid(row=2, column=1, sticky=W)
+        # Location
+        self.location_frame = ttk.Frame(self.main_frame, relief=FLAT, padding=5)
+        self.location_frame.pack(fill=X)
+        ttk.Label(self.location_frame, text='Location: ', padding=5).grid(row=0, column=0, sticky=W)
+        self.location_entry = ttk.Entry(self.location_frame, width=60)
+        self.location_entry.grid(row=0, column=1, sticky=W)
+        # Note
+        self.note_frame = ttk.Frame(self.main_frame, relief=FLAT, padding=5)
+        self.note_frame.pack(fill=X)
+        ttk.Label(self.note_frame, text='Note: ', padding=5).grid(row=0, column=0, sticky=W)
+        self.note_yscrollbar = ttk.Scrollbar(self.note_frame, orient=VERTICAL)
+        self.note_yscrollbar.grid(row=1, column=1, stick=N+S+E)
+        self.note_entry = Text(self.note_frame,
+                               height=10,
+                               wrap=WORD,
+                               font='Times 12',
+                               yscrollcommand=self.note_yscrollbar.set)
+        self.note_yscrollbar.config(command=self.note_entry.yview)
+        self.note_entry.grid(row=1, column=0, sticky=E+W)
+        self.note_frame.rowconfigure(index=1, weight=1)
+        self.note_frame.columnconfigure(index=0, weight=1)
+
+        # Buttons
+        self.button_frame = ttk.Frame(self, relief=FLAT, padding=10)
+        self.button_frame.pack()
+        if self.mode == ADD:
+            self.add_button = ttk.Button(self.button_frame,
+                                         text='Add task',
+                                         command=self.add_task)
+            self.add_button.pack()
+        elif self.mode == VIEW:
+            self.edit_button = ttk.Button(self.button_frame,
+                                          text='Edit',
+                                          width=10,
+                                          command=self.edit_task)
+            self.edit_button.grid(row=0, column=0, sticky=W)
+            self.save_button = ttk.Button(self.button_frame,
+                                          text='Save',
+                                          width=10,
+                                          command=self.update_task_info,
+                                          state=DISABLED)
+            self.save_button.grid(row=0, column=1, sticky=W)
+            self.cancel_button = ttk.Button(self.button_frame,
+                                            text='Cancel',
+                                            width=10,
+                                            command=self.destroy)
+            self.cancel_button.grid(row=1, column=0, columnspan=2)
+
+        # Theme and style
+        self.style.configure('TaskForm.TLabel', font='Calibri 30')
+
+        # Configures
+        if self.mode == VIEW:
+            self.view_mode()
+        self.set_editable(editable)
+
+    def set_editable(self, editable=True, event=None):
+        if editable:
+            state = NORMAL
+        else:
+            state = DISABLED
+        self.task_name_entry.config(state=state)
+        self.date_entry.config(state=state)
+        self.start_clock.change_state(state=state)
+        self.end_clock.change_state(state=state)
+        self.location_entry.config(state=state)
+        self.note_entry.config(state=state)
+        if self.mode == VIEW:
+            self.finished_checkbox.config(state=state)
+        return
+
+    def add_task(self, event=None):
+        task_name = self.task_name_entry.get()
+        date = self.date_entry.get_date().strftime('%m/%d/%Y')
+        if not task_name or not date:
+            messagebox.showerror('Error', 'Task name and date are required')
+            self.lift()
+        else:
+            # Get the info
+            start_time = '00:00:00'
+            if self.start_var.get():
+                try:
+                    start_time = self.start_clock.get_time()
+                except ValueError:
+                    messagebox.showerror('Error', 'Invalid start time')
+                    self.lift()
+            end_time = '23:59:59'
+            if self.end_var.get():
+                try:
+                    end_time = self.end_clock.get_time()
+                except ValueError:
+                    messagebox.showerror('Error', 'Invalid end time')
+                    self.lift()
+            location = self.location_entry.get() if self.location_entry.get() else None
+            note = self.note_entry.get(1.0, END).strip() if self.note_entry.get(1.0, END) else None
+            # Check for time overlap
+            time_overlap_tag = None
+            count = 1
+            for available_task in self.tasks['tasks_list'].keys():
+                if available_task == task_name:
+                    messagebox.showerror('Error', 'Task name already exists')
+                    self.lift()
+                    return
+                if self.tasks['tasks_list'][available_task]['date'] == date:
+                    start1 = start_time
+                    start1 = datetime.datetime.strptime(date + ' ' + start1, '%m/%d/%Y %H:%M:%S')
+                    end1 = end_time
+                    end1 = datetime.datetime.strptime(date + ' ' + end1, '%m/%d/%Y %H:%M:%S')
+                    start2 = self.tasks['tasks_list'][available_task]['start'] \
+                        if self.tasks['tasks_list'][available_task]['start'] else '00:00:00'
+                    start2 = datetime.datetime.strptime(date + ' ' + start2, '%m/%d/%Y %H:%M:%S')
+                    end2 = self.tasks['tasks_list'][available_task]['end'] \
+                        if self.tasks['tasks_list'][available_task]['end'] else '23:59:59'
+                    end2 = datetime.datetime.strptime(date + ' ' + end2, '%m/%d/%Y %H:%M:%S')
+                    overlap = min(end1, end2) - max(start1, start2)
+                    if overlap.days >= 0:
+                        self.tasks['tasks_list'][available_task]['time_overlap_tag'] = date
+                        time_overlap_tag = date
+                        count += 1
+            if time_overlap_tag is not None:
+                if time_overlap_tag in self.tasks['time_overlap_tags'].keys():
+                    self.tasks['time_overlap_tags'][time_overlap_tag] += 1
+                else:
+                    self.tasks['time_overlap_tags'][time_overlap_tag] = count
+            # Add new task
+            new_task = data.Task(username=self.username,
+                                 date=date,
+                                 start=start_time,
+                                 end=end_time,
+                                 location=location,
+                                 note=note,
+                                 time_overlap_tag=time_overlap_tag)
+            self.tasks['tasks_list'][task_name] = new_task.to_dict()
+            messagebox.showinfo('Success', 'New task has been added successfully')
+            self.destroy()
+        return
+
+    def edit_task(self, event=None):
+        self.set_editable(True)
+        self.task_name_entry.config(state=DISABLED)     # The task name must not change
+        self.edit_button.config(state=DISABLED)
+        self.save_button.config(state=NORMAL)
+        return
+
+    def update_task_info(self, event=None):
+        # update info
+        date = self.date_entry.get_date().strftime('%m/%d/%Y')
+        self.tasks['tasks_list'][self.task_name]['date'] = date
+        try:
+            self.tasks['tasks_list'][self.task_name]['start'] = self.start_clock.get_time()
+        except ValueError:
+            messagebox.showerror('Error', 'Invalid start time')
+            self.lift()
+            return
+        try:
+            self.tasks['tasks_list'][self.task_name]['end'] = self.end_clock.get_time()
+        except ValueError:
+            messagebox.showerror('Error', 'Invalid end time')
+            self.lift()
+            return
+        location = self.location_entry.get() if self.location_entry.get() else None
+        self.tasks['tasks_list'][self.task_name]['location'] = location
+        note = self.note_entry.get(1.0, END).strip() if self.note_entry.get(1.0, END) else None
+        self.tasks['tasks_list'][self.task_name]['note'] = note
+        if self.finished_var.get():
+            self.tasks['tasks_list'][self.task_name]['finished'] = True
+            now = datetime.datetime.now().strftime('%m/%d/%Y %H:%M:%S')
+            self.tasks['tasks_list'][self.task_name]['finish_date'] = now
+        else:
+            self.tasks['tasks_list'][self.task_name]['finished'] = False
+            self.tasks['tasks_list'][self.task_name]['finish_date'] = None
+        # Change everything pack to view mode
+        self.view_mode()
+        self.set_editable(False)
+        self.edit_button.config(state=NORMAL)
+        self.save_button.config(state=DISABLED)
+        return
+
+    def view_mode(self, event=None):
+        task_name = self.task_name
+        self.task_name_entry.delete(0, END)
+        self.task_name_entry.insert(0, task_name)
+        date = self.tasks['tasks_list'][task_name]['date']
+        date = datetime.datetime.strptime(date, '%m/%d/%Y')
+        self.date_entry.set_date(date)
+        start_time = self.tasks['tasks_list'][task_name]['start']
+        self.start_clock.set_time(start_time)
+        end_time = self.tasks['tasks_list'][task_name]['end']
+        self.end_clock.set_time(end_time)
+        location = self.tasks['tasks_list'][task_name]['location'] \
+            if self.tasks['tasks_list'][task_name]['location'] else None
+        self.location_entry.delete(0, END)
+        self.location_entry.insert(0, location)
+        note = self.tasks['tasks_list'][task_name]['note'] if self.tasks['tasks_list'][task_name]['note'] else None
+        self.note_entry.delete(1.0, END)
+        self.note_entry.insert(1.0, note)
+        finished = self.tasks['tasks_list'][task_name]['finished']
+        if finished and self.mode == VIEW:
+            # self.finished_checkbox.state(['selected'])
+            self.finished_var.set(1)
+        elif not finished and self.mode == VIEW:
+            # self.finished_checkbox.state(['!alternate'])
+            self.finished_var.set(0)
         return
 
 
@@ -441,6 +733,57 @@ class _InputDialog(Toplevel):
         self.destroy()
 
 
+class _SpinClock(Frame):
+
+    def __init__(self, master=None):
+        super().__init__(master)
+        self.master = master
+        self.hour_spinner = ttk.Spinbox(self, from_=0, to=23,
+                                        wrap=True,
+                                        width=5,
+                                        state='readonly',
+                                        justify=CENTER)
+        self.hour_spinner.grid(row=0, column=0)
+        ttk.Label(self, text='h', padding=2).grid(row=0, column=1)
+        self.minute_spinner = ttk.Spinbox(self, from_=0, to=59,
+                                          wrap=True,
+                                          width=5,
+                                          state='readonly',
+                                          justify=CENTER)
+        self.minute_spinner.grid(row=0, column=2)
+        ttk.Label(self, text='m', padding=2).grid(row=0, column=3)
+        self.second_spinner = ttk.Spinbox(self, from_=0, to=59,
+                                          wrap=True,
+                                          width=5,
+                                          state='readonly',
+                                          justify=CENTER)
+        self.second_spinner.grid(row=0, column=4)
+        ttk.Label(self, text='s', padding=2).grid(row=0, column=5)
+
+    def get_time(self, event=None):
+        # Format: %H:%M:%S
+        hour = self.hour_spinner.get()
+        minute = self.minute_spinner.get()
+        second = self.second_spinner.get()
+        time = f'{hour}:{minute}:{second}'
+        time = datetime.datetime.strptime(time, '%H:%M:%S').time()
+        time = time.strftime('%H:%M:%S')
+        return time
+
+    def change_state(self, state):
+        self.hour_spinner.config(state=state)
+        self.minute_spinner.config(state=state)
+        self.second_spinner.config(state=state)
+        return
+
+    def set_time(self, time: str):
+        time = time.split(':')
+        self.hour_spinner.set(int(time[0]))
+        self.minute_spinner.set(int(time[1]))
+        self.second_spinner.set(int(time[2]))
+        return
+
+
 # Functions
 def create_info_frame(master=None, editable=True, acc_info=None):
     return _InfoFrame(master, editable, acc_info)
@@ -450,9 +793,23 @@ def create_user_form(master=None, accounts_data=None, mode=SIGN_UP, deiconify_ma
     return _UserFormWindow(master, accounts_data, mode, deiconify_master, username)
 
 
+def create_task_form(master=None, username=None, tasks_data=None, mode=ADD, editable=True, task_name=None):
+    return _TaskFormWindow(master, username, tasks_data, mode, editable, task_name)
+
+
 def input_string_dialog(master=None, title='', prompt='', show='*'):
     dialog = _InputDialog(master, title, prompt, show)
     return dialog.text.get()
+
+
+def random_color():
+    de_ = ("%02x" % random.randint(0, 255))
+    # re_ = ("%02x" % random.randint(0, 255))
+    re_ = '95'  # We'll only choose light colors
+    we_ = ("%02x" % random.randint(0, 255))
+    ge_ = "#"
+    color = ge_ + de_ + re_ + we_
+    return color
 
 
 def style_map(widget, **kwargs):

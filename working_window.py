@@ -42,13 +42,14 @@ class _WorkingWindow(Tk):
         # File menu: contains options like logout, exit
         self.file_menu = Menu(self.menu, tearoff=False)
         self.menu.add_cascade(label='File', menu=self.file_menu)
-        self.file_menu.add_command(label='Refresh', command=None)   # TODO: this
+        self.file_menu.add_command(label='Refresh',
+                                   command=lambda: (self.todo_frame.refresh(), self.accounts_manager_frame.refresh())
+                                   )
         self.file_menu.add_command(label='Log out', command=self.logout)
         self.file_menu.add_command(label='Exit', command=self.destroy)
-        # TODO: add more stuff here
         # Edit menu:
-        self.edit_menu = Menu(self.menu, tearoff=False)
-        self.menu.add_cascade(label='Edit', menu=self.edit_menu)
+        # self.edit_menu = Menu(self.menu, tearoff=False)
+        # self.menu.add_cascade(label='Edit', menu=self.edit_menu)
         # TODO: add more stuff here
 
         # Notebook to switch between frames:
@@ -57,8 +58,8 @@ class _WorkingWindow(Tk):
         self.notebook.enable_traversal()    # (Shift) + Ctrl + Tab
         # To do list (The "main" working frame)
         self.todo_frame = todo_list.create_todo_frame(self.notebook,
-                                                      accounts_data=self.accounts,
-                                                      username=self.username)
+                                                      username=self.username,
+                                                      tasks_data=self.tasks)
         self.notebook.add(self.todo_frame, text='To do list')
         # Profile: The user can view their profile info here
         self.profile_frame = profile.create_profile_frame(self.notebook,
