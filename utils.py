@@ -22,6 +22,17 @@ MONTHS_FULL = tuple(calendar.month_name[i] for i in range(1, 13))
 MONTHS_SHORT = tuple(calendar.month_abbr[i] for i in range(1, 13))
 YEARS_PAST = tuple(range(datetime.datetime.now().year-100, datetime.datetime.now().year+1))
 YEARS_FUTURE = tuple(range(datetime.datetime.now().year, datetime.datetime.now().year+100))
+REPEAT_OPTIONS = ('None', 'Daily', 'Weekly', 'Monthly', 'Annually')
+REPEAT_DAYS = {'None': 0,
+               'Daily': 1,
+               'Weekly': 7,
+               'Monthly': 30,
+               'Annually': 365}
+DAYS_REPEAT = {0: 'None',
+               1: 'Daily',
+               7: 'Weekly',
+               30: 'Monthly',
+               365: 'Annually'}
 
 
 # Classes
@@ -471,6 +482,13 @@ class _TaskFormWindow(Toplevel):
             ttk.Label(self.time_frame, text='End time: ', padding=5).grid(row=2, column=0, sticky=W)
         self.end_clock = _SpinClock(self.time_frame)
         self.end_clock.grid(row=2, column=1, sticky=W)
+        ttk.Label(self.time_frame, text='Repeatable: ').grid(row=3, column=0, sticky=W)
+        self.repeat_var = StringVar(self)
+        self.repeat_option = ttk.OptionMenu(self.time_frame,
+                                            self.repeat_var,
+                                            'None',
+                                            *REPEAT_OPTIONS)
+        self.repeat_option.grid(row=3, column=1, sticky=W)
         # Location
         self.location_frame = ttk.Frame(self.main_frame, relief=FLAT, padding=5)
         self.location_frame.pack(fill=X)
@@ -536,6 +554,7 @@ class _TaskFormWindow(Toplevel):
         self.date_entry.config(state=state)
         self.start_clock.change_state(state=state)
         self.end_clock.change_state(state=state)
+        self.repeat_option.config(state=state)
         self.location_entry.config(state=state)
         self.note_entry.config(state=state)
         if self.mode == VIEW:
@@ -564,6 +583,7 @@ class _TaskFormWindow(Toplevel):
                 except ValueError:
                     messagebox.showerror('Error', 'Invalid end time')
                     self.lift()
+            repeat = REPEAT_DAYS[self.repeat_var.get()]
             location = self.location_entry.get() if self.location_entry.get() else None
             note = self.note_entry.get(1.0, END).strip() if self.note_entry.get(1.0, END) else None
             # Check for time overlap
@@ -600,6 +620,7 @@ class _TaskFormWindow(Toplevel):
                                  date=date,
                                  start=start_time,
                                  end=end_time,
+                                 repeat=repeat,
                                  location=location,
                                  note=note,
                                  time_overlap_tag=time_overlap_tag)
@@ -631,6 +652,8 @@ class _TaskFormWindow(Toplevel):
             messagebox.showerror('Error', 'Invalid end time')
             self.lift()
             return
+        repeat = self.repeat_var.get()
+        self.tasks['tasks_list'][self.task_name]['repeat'] = REPEAT_DAYS[repeat]
         location = self.location_entry.get() if self.location_entry.get() else None
         self.tasks['tasks_list'][self.task_name]['location'] = location
         note = self.note_entry.get(1.0, END).strip() if self.note_entry.get(1.0, END) else None
@@ -660,6 +683,8 @@ class _TaskFormWindow(Toplevel):
         self.start_clock.set_time(start_time)
         end_time = self.tasks['tasks_list'][task_name]['end']
         self.end_clock.set_time(end_time)
+        repeat = self.tasks['tasks_list'][task_name]['repeat']
+        self.repeat_var.set(DAYS_REPEAT[repeat])
         location = self.tasks['tasks_list'][task_name]['location'] \
             if self.tasks['tasks_list'][task_name]['location'] else None
         self.location_entry.delete(0, END)
