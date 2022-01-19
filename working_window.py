@@ -1,7 +1,10 @@
 from tkinter import *
 from tkinter import ttk
+from tkinter import messagebox
 import os
 import json
+import pystray
+from PIL import Image
 import utils
 import data
 import profile
@@ -19,6 +22,7 @@ class _WorkingWindow(Tk):
         self.mode = mode
         self.data_path = os.path.join(os.getcwd(), 'data/')
         self.task_path = os.path.join(self.data_path, 'tasks/')
+        self.img_path = os.path.join(os.getcwd(), 'img/')
         with open(os.path.join(self.data_path, 'accounts.bin'), 'rb') as f:
             self.accounts = json.loads(f.read().decode('utf-8'))
         try:
@@ -82,12 +86,31 @@ class _WorkingWindow(Tk):
             f.write(json.dumps(self.accounts).encode('utf-8'))
         with open(os.path.join(self.task_path, f'{self.username}.bin'), 'wb') as f:
             f.write(json.dumps(self.tasks).encode('utf-8'))
-        super().destroy()
+        minimize = messagebox.askyesno('Quit',
+                                       'Do you want to minimize the app to system tray?\nYes: Minimize\nNo: Exit app')
+        if minimize:
+            self.withdraw()
+            image = Image.open(os.path.join(self.img_path, 'systray_icon.ico'))
+            menu = (pystray.MenuItem('Show window', self.show_window),
+                    pystray.MenuItem('Exit', self.quit_window))
+            icon = pystray.Icon('name', image, 'To-do list app', menu)
+            icon.run()
+        else:
+            super().destroy()
 
     def logout(self, event=None):
         self.accounts['stay_signed_in'] = None
         self.destroy()
         login_window.create_login_window()
+
+    def quit_window(self, icon, item):
+        icon.stop()
+        super().destroy()
+
+    def show_window(self, icon, item):
+        icon.stop()
+        self.deiconify()
+        self.state('zoomed')
 
 
 # Functions

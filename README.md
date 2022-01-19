@@ -18,3 +18,4 @@ ___________________________________________
     - View and edit task information.
     - Filter tasks by date (using the calendar).
     - Filter overlapping tasks.
+  - Added an option to minimize the program to system tray instead of exiting.
