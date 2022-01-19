@@ -171,6 +171,22 @@ class _TodoFrame(ttk.Frame):
             self.finished_list.delete(task)
         # Add stuff to the lists
         for task in self.tasks['tasks_list'].keys():
+            # Check repeat:
+            repeat = self.tasks['tasks_list'][task]['repeat']
+            now = datetime.datetime.now()
+            if repeat > 0:
+                creation_date = self.tasks['tasks_list'][task]['creation_date']
+                creation_date = datetime.datetime.strptime(creation_date, '%m/%d/%Y %H:%M:%S')
+                if (now - creation_date).days >= repeat:
+                    # If it is time to repeat the task, then update the date, creation date and finish state
+                    date = self.tasks['tasks_list'][task]['date']
+                    date = datetime.datetime.strptime(date, '%m/%d/%Y').date()
+                    date = date + datetime.timedelta(days=repeat)
+                    date = date.strftime('%m/%d/%Y')
+                    self.tasks['tasks_list'][task]['date'] = date
+                    self.tasks['tasks_list'][task]['creation_date'] = now.strftime('%m/%d/%Y %H:%M:%S')
+                    self.tasks['tasks_list'][task]['finished'] = False
+                    self.tasks['tasks_list'][task]['finish_date'] = None
             # This value is required when adding task => No need to check for null
             task_name = task
             # This value is required when adding task => No need to check for null
@@ -180,7 +196,6 @@ class _TodoFrame(ttk.Frame):
             location = self.tasks['tasks_list'][task]['location'] if self.tasks['tasks_list'][task]['location'] else ''
             # Check if the user is already late for the task
             deadline = datetime.datetime.strptime(date + ' ' + end_time, '%m/%d/%Y %H:%M:%S')
-            now = datetime.datetime.now()
             if deadline > now:
                 self.tasks['tasks_list'][task]['late'] = False
             else:

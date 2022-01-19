@@ -1,3 +1,6 @@
+import datetime
+
+
 # Classes
 class Account:
 
@@ -19,15 +22,17 @@ class Account:
 
 class Task:
 
-    def __init__(self, username, date, start='00:00:00', end='23:59:59', location=None, note=None,
-                 late=False, finish_date=None, finished=False, time_overlap_tag=None):
+    def __init__(self, username, date, start='00:00:00', end='23:59:59', location=None, note=None, repeat=0,
+                 late=False, finish_date=None, finished=False, time_overlap_tag=None,):
         self.username = username
         self.date = date
         self.start = start  # Format: %H:%M:%S
         self.end = end      # Format: %H:%M:%S
         self.location = location
         self.note = note
+        self.repeat = repeat    # int, days
         self.late = late
+        self.creation_date = datetime.datetime.now().strftime('%m/%d/%Y %H:%M:%S')
         self.finish_date = finish_date
         self.finished = finished
         self.time_overlap_tag = time_overlap_tag

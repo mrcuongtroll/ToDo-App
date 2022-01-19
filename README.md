@@ -19,3 +19,4 @@ ___________________________________________
     - Filter tasks by date (using the calendar).
     - Filter overlapping tasks.
   - Added an option to minimize the program to system tray instead of exiting.
+  - Task can now be repeatable daily, weekly, monthly or annually.
