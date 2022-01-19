@@ -1,5 +1,6 @@
 from tkinter import *
 from tkinter import ttk
+from tkinter import messagebox
 import os
 import utils
 
@@ -112,6 +113,10 @@ class _AccountsManagerFrame(ttk.Frame):
                                       index=END,
                                       values=(username, name, dob, address, restriction)
                                       )
+        # Clear all selections
+        for acc in self.accounts_list.selection():
+            self.accounts_list.selection_remove(acc)
+        self.account_select()
         return
 
     def add_user(self, event=None):
@@ -134,17 +139,19 @@ class _AccountsManagerFrame(ttk.Frame):
 
     def remove_user(self, event=None):
         username = self.accounts_list.selection()[0]
-        del self.accounts['accounts'][username]
-        self.refresh()
+        delete = messagebox.askyesno('Delete account', f'Are you sure you want to delete {username}?')
+        if delete:
+            del self.accounts['accounts'][username]
+            self.refresh()
         return
 
-    def restrict_user(self, end_date=None, event=None):
+    def restrict_user(self, event=None):
         username = self.accounts_list.selection()[0]
-        if end_date:
-            self.accounts['accounts'][username]['restriction'] = end_date
-        else:
+        restrict = messagebox.askyesno('Restrict account',
+                                       f'Are you sure you want to restrict {username} indefinitely?')
+        if restrict:
             self.accounts['accounts'][username]['restriction'] = 'indefinite'
-        self.refresh()
+            self.refresh()
         return
 
     def account_select(self, event=None):
@@ -152,9 +159,11 @@ class _AccountsManagerFrame(ttk.Frame):
             # If nothing is selected then disable some buttons
             self.reset_control()
         else:
+            username = self.accounts_list.selection()[0]
             self.view_button.config(state=NORMAL)
             self.remove_button.config(state=NORMAL)
-            self.restrict_button.config(state=NORMAL)
+            if self.accounts['accounts'][username]['restriction'] is None:
+                self.restrict_button.config(state=NORMAL)
         return
 
     def reset_control(self, event=None):
