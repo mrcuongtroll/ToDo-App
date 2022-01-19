@@ -1,7 +1,10 @@
 from tkinter import *
 from tkinter import ttk
+from tkinter import messagebox
 import os
 import json
+import pystray
+from PIL import Image
 import utils
 import data
 import profile
@@ -19,6 +22,7 @@ class _WorkingWindow(Tk):
         self.mode = mode
         self.data_path = os.path.join(os.getcwd(), 'data/')
         self.task_path = os.path.join(self.data_path, 'tasks/')
+        self.img_path = os.path.join(os.getcwd(), 'img/')
         with open(os.path.join(self.data_path, 'accounts.bin'), 'rb') as f:
             self.accounts = json.loads(f.read().decode('utf-8'))
         try:
@@ -45,6 +49,7 @@ class _WorkingWindow(Tk):
         self.file_menu.add_command(label='Refresh',
                                    command=lambda: (self.todo_frame.refresh(), self.accounts_manager_frame.refresh())
                                    )
+        self.file_menu.add_command(label='Minimize to system tray', command=self.minimize_to_systray)
         self.file_menu.add_command(label='Log out', command=self.logout)
         self.file_menu.add_command(label='Exit', command=self.destroy)
         # Edit menu:
@@ -82,12 +87,43 @@ class _WorkingWindow(Tk):
             f.write(json.dumps(self.accounts).encode('utf-8'))
         with open(os.path.join(self.task_path, f'{self.username}.bin'), 'wb') as f:
             f.write(json.dumps(self.tasks).encode('utf-8'))
-        super().destroy()
+        minimize = messagebox.askyesno('Exit',
+                                       'Do you want to minimize to system tray?\nYes: Minimize\nNo: Exit program')
+        if minimize:
+            self.minimize_to_systray()
+        else:
+            super().destroy()
 
     def logout(self, event=None):
         self.accounts['stay_signed_in'] = None
-        self.destroy()
+        with open(os.path.join(self.data_path, 'accounts.bin'), 'wb') as f:
+            f.write(json.dumps(self.accounts).encode('utf-8'))
+        with open(os.path.join(self.task_path, f'{self.username}.bin'), 'wb') as f:
+            f.write(json.dumps(self.tasks).encode('utf-8'))
+        super().destroy()
         login_window.create_login_window()
+
+    def quit_window(self, icon, item):
+        icon.stop()
+        super().destroy()
+
+    def show_window(self, icon, item):
+        icon.stop()
+        self.after(0, self.deiconify)
+        self.state('zoomed')
+
+    def minimized_logout(self, icon, item):
+        icon.stop()
+        self.after(0, self.logout)
+
+    def minimize_to_systray(self):
+        self.withdraw()
+        image = Image.open(os.path.join(self.img_path, 'systray_icon.ico'))
+        menu = (pystray.MenuItem('Show window', self.show_window),
+                pystray.MenuItem('Log out', self.minimized_logout),
+                pystray.MenuItem('Exit', self.quit_window))
+        icon = pystray.Icon('name', image, 'To-do list app', menu)
+        icon.run()
 
 
 # Functions
