@@ -691,7 +691,7 @@ class _TaskFormWindow(Toplevel):
         self.location_entry.insert(0, location)
         note = self.tasks['tasks_list'][task_name]['note'] if self.tasks['tasks_list'][task_name]['note'] else None
         self.note_entry.delete(1.0, END)
-        self.note_entry.insert(1.0, note)
+        self.note_entry.insert(END, note)
         finished = self.tasks['tasks_list'][task_name]['finished']
         if finished and self.mode == VIEW:
             # self.finished_checkbox.state(['selected'])

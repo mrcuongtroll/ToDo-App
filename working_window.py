@@ -52,10 +52,6 @@ class _WorkingWindow(Tk):
         self.file_menu.add_command(label='Minimize to system tray', command=self.minimize_to_systray)
         self.file_menu.add_command(label='Log out', command=self.logout)
         self.file_menu.add_command(label='Exit', command=self.destroy)
-        # Edit menu:
-        # self.edit_menu = Menu(self.menu, tearoff=False)
-        # self.menu.add_cascade(label='Edit', menu=self.edit_menu)
-        # TODO: add more stuff here
 
         # Notebook to switch between frames:
         self.notebook = ttk.Notebook(self, padding=5)
