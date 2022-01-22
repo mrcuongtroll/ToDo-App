@@ -675,7 +675,7 @@ class _TaskFormWindow(Toplevel):
     def view_mode(self, event=None):
         task_name = self.task_name
         self.task_name_entry.delete(0, END)
-        self.task_name_entry.insert(0, task_name)
+        self.task_name_entry.insert(END, task_name)
         date = self.tasks['tasks_list'][task_name]['date']
         date = datetime.datetime.strptime(date, '%m/%d/%Y')
         self.date_entry.set_date(date)
@@ -686,10 +686,10 @@ class _TaskFormWindow(Toplevel):
         repeat = self.tasks['tasks_list'][task_name]['repeat']
         self.repeat_var.set(DAYS_REPEAT[repeat])
         location = self.tasks['tasks_list'][task_name]['location'] \
-            if self.tasks['tasks_list'][task_name]['location'] else None
+            if self.tasks['tasks_list'][task_name]['location'] else ''
         self.location_entry.delete(0, END)
-        self.location_entry.insert(0, location)
-        note = self.tasks['tasks_list'][task_name]['note'] if self.tasks['tasks_list'][task_name]['note'] else None
+        self.location_entry.insert(END, location)
+        note = self.tasks['tasks_list'][task_name]['note'] if self.tasks['tasks_list'][task_name]['note'] else ''
         self.note_entry.delete(1.0, END)
         self.note_entry.insert(END, note)
         finished = self.tasks['tasks_list'][task_name]['finished']
